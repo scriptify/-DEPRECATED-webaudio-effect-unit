@@ -47,12 +47,10 @@ The values field __must__ be an array. This array must contain objects with the 
 
 {
   name: String,
-  type: {
-    name: String,
-    options: {
-      defaultValue: ANY,
-      [...]
-    }
+  options: {
+    type: String
+    defaultValue: ANY,
+    [...]
   },
   set: function(effectChain, value)
 }
@@ -60,7 +58,6 @@ The values field __must__ be an array. This array must contain objects with the 
 ```
 
 - __name__: Specify the name of the value
-- __type__: Specify the type of the value (e.g. range, single etc.). Also here, this has just a repre value an could be used of your UI to know how to act.
 - __options__: With this object, you define the metadata of this value, which can later on be used e.g. by the User Interface. The whole object, with an exception of the __defaultValue__ field, does not impact the functioning of the EffectUnit: It has just a representational value. The __defaultValue__ field is the only field which makes a difference, because the __set__-function will initially be called with the __defaultValue__ as an argument.
 - __set__: Here, the actual function, which manipulates the value, gets implemented. This function receives the __effectChain__ as the 1° argument and the value, which needs to be set, as the 2° argument. Based on the __effectChain__-object you created before and the value, implement this function.
 
