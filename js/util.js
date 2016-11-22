@@ -1,15 +1,14 @@
-export const bindMethods = (methods, objToBind) => {
-  let retMethods = {};
-  for(let prop in methods) {
-    const method = methods[prop];
-    if(typeof method === 'function') {
-      retMethods[prop] = method.bind(undefined, objToBind);
-    } else {
-      throw new Error('One of the object members wasn\'t a method.');
-    }
-  }
+export const bindMethodsToValues = (values, param) => {
+  return values.map(value => {
 
-  return retMethods;
+    if(!(typeof value.set === 'function'))
+      throw new Error(`The specified value for the 'set'-field of the '${ value.name }' - value is not a function!`);
+
+    return {
+      ...value,
+      set: value.set.bind(undefined, param)
+    };
+  });
 };
 
 export const functionsToValues = obj => {
@@ -29,4 +28,13 @@ export const objToArray = obj => {
     array.push( obj[prop] );
   }
   return array;
+};
+
+export const filterValue = (values, valueName) => {
+  const filteredValue = values.filter(val => val.name === valueName)[0];
+
+  if(!filteredValue)
+    throw new Error(`Tried to access inexistent value '${valueName}'.`);
+
+  return filteredValue;
 };

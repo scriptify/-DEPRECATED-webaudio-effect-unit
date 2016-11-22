@@ -1,19 +1,45 @@
-import { functionsToValues, bindMethods, objToArray } from './util';
+import { functionsToValues, bindMethodsToValues, objToArray, filterValue } from './util';
 
 
 class EffectUnit {
 
-  constructor(effectChain = {}, methods = {}, audioCtx) {
+  audioCtx;
+  name;
+  effectChain;
+  values;
+  isEffectUnit = true;
+
+  effectGain;
+  directGain;
+
+  output;
+  input;
+
+  constructor(options = { name: '', effectChain: {}, values: [] }, audioCtx) {
+    /*
+      The options object must have the following structure:
+      {
+        name: The name of the effect to identify it later
+        effectChain: The object which contains the audioprocessors,
+        values: An array which contains the available values for this effect and the according methods to edit them
+      }
+    */
 
     if(!audioCtx)
       throw new Error('The AudioContext specified (3° parameter) is not defined!');
 
+    this.name = name;
     this.audioCtx = audioCtx;
-    this.effectChain = functionsToValues(effectChain);
+    this.effectChain = functionsToValues(options.effectChain);
 
-    // Give all custom methods the effect chain as a default argument
-    this.methods = bindMethods(methods, this.effectChain);
-    this.isEffectUnit = true;
+    // Give all 'set'-methods of the specified values the effectChain as the first parameter
+    this.values = bindMethodsToValues(options.values, this.effectChain);
+
+    // Now execute all 'set'-methods of the according values which have a 'defaultValue'-field in their 'options'-object
+    this.values.forEach(value => {
+      if(value.options.defaultValue)
+        value.set(value.options.defaultValue);
+    })
 
     this.setupEffectChain();
   }
@@ -37,6 +63,14 @@ class EffectUnit {
     }
   }
 
+  setValue(valueName, value) {
+    filterValue(this.values, valueName).set(value);
+  }
+
+  getValueOptions(valueName) {
+    return filterValue(this.values, valueName).options;
+  }
+
   setupEffectChain() {
 
     this.effectGain = this.audioCtx.createGain(); // Set to 1 ==> Effect is on; Set to 0 ==> Effect is off
@@ -50,9 +84,6 @@ class EffectUnit {
 
     // Connect direct gain to ouput
     this.directGain.connect(this.output);
-
-    // Initially turn on
-    this.enable();
 
     // Connect the effectChain
     let effects = objToArray(this.effectChain);
@@ -70,6 +101,8 @@ class EffectUnit {
       effects[effects.length - 1].connect( this.output );
     }
 
+    // Turn on after the effectChain was connected
+    this.enable();
 
   }
 

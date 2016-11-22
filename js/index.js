@@ -5,67 +5,95 @@ import EffectUnit from './EffectUnit';
 const main = () => {
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  const gainEff = new EffectUnit(
-  {
-    gain: audioCtx.createGain()
-  },
-  {
-    mute: effectChain => {
-      effectChain.gain.gain.value = 0;
-    },
-    unmute: effectChain => {
-      effectChain.gain.gain.value = 1;
+  const gainEff = new EffectUnit({
+    name: 'gain',
+    values: [
+      {
+        name: 'isMuted',
+        options: {
+          type: 'bool',
+          defaultValue: true
+        },
+        set: (effectChain, val) => {
+          effectChain.gain.gain.value = val ? 0 : 0.6;
+        }
+      },
+      {
+        name: 'gain',
+        options: { // Those values are all just optional metadata for you (e.g. a UI-component could use this to know how to configure the range slider)
+          type: 'range',
+          defaultValue: 1, // The only value which could be of real interest here: If this field is present, the 'set'-method gets executed once with it's value
+          min: 0,
+          max: 0.6,
+          step: 0.1
+        },
+        set: (effectChain, val) => {
+          effectChain.gain.gain.value = val;
+        }
+      }
+    ],
+    effectChain: {
+      gain: audioCtx.createGain()
     }
   }, audioCtx);
 
-  const highpassEff = new EffectUnit(
-    {
-      highpass: () => {
+  const hpEff = new EffectUnit({
+    name: 'highpass',
+    effectChain: {
+      hp: () => {
         const hp = audioCtx.createBiquadFilter();
         hp.type = 'highpass';
-        hp.frequency.value = 1000;
         return hp;
       }
     },
-    {
-      more: effectChain => {
-        effectChain.highpass.frequency.value += 100;
-      },
-      less: effectChain => {
-        effectChain.highpass.frequency.value -= 100;
+    values: [
+      {
+        name: 'frequency',
+        options: {
+          type: 'range',
+          defaultValue: 0,
+          min: 0,
+          max: 200,
+          step: 10
+        },
+        set: (effectChain, value) => {
+          effectChain.hp.frequency.value = value;
+        }
       }
-    },
-    audioCtx
-  )
+    ]
+  }, audioCtx);
 
   const osci = audioCtx.createOscillator();
   osci.type = 'square';
-  osci.frequency.value = 50;
+  osci.frequency.value = 200;
   osci.connect(gainEff.input);
 
-  gainEff.connect(highpassEff);
-
-  highpassEff.connect(audioCtx.destination);
+  gainEff.connect( hpEff );
+  hpEff.connect( audioCtx.destination );
 
   //osci.start();
 
+  const hpOptions = hpEff.getValueOptions('frequency');
+  let currHpFreq = hpOptions.defaultValue;
   let up = true;
-  let c = 0;
   window.setInterval(() => {
-    if(up) {
-      c++;
-      highpassEff.methods.more();
-    } else {
-      c--;
-      highpassEff.methods.less();
-    }
+    if(up)
+      currHpFreq += hpOptions.step;
+    else
+      currHpFreq -= hpOptions.step;
 
-    if(c <= 0)
-      up = true;
-
-    if(c > 50)
+    if(currHpFreq >= hpOptions.max)
       up = false;
 
+    if(currHpFreq <= hpOptions.min)
+      up = true;
+
+  if(currHpFreq % 100 === 0)
+    gainEff.setValue('isMuted', true);
+  else
+    gainEff.setValue('isMuted', false);
+
+    hpEff.setValue('frequency', currHpFreq);
   }, 100);
 
 };
