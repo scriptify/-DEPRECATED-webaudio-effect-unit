@@ -106,6 +106,11 @@ class EffectUnit {
 
   }
 
+  disconnect() {
+    // Disconnect all outgoing connections
+    this.output.disconnect();
+  }
+
 }
 
 export default EffectUnit;

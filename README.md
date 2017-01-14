@@ -90,6 +90,12 @@ Just use the input field of your EffectUnit-object.
 
     anAudioNode.connect( anEffectUnit.input  );
 
+#### Disconnecting all outputs
+
+This method let's you disconnect all outgoing connections of an EffectUnit.
+
+    .disconnect();
+
 #### Setting a value
 
     .setValue(valueName:String, value:ANY)
