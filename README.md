@@ -1,3 +1,6 @@
+# ATTENTION!
+# This package is now maintained as a part of the [sountility collection](https://github.com/scriptify/sountility). This repository won't be used anymore for this package, but it will still be maintained.
+
 # webaudio effect unit
 Simply create effects or other audio processors with the Web Audio API which can be enabled and disabled.
 
